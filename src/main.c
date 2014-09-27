@@ -28,7 +28,7 @@ int main (int argn, char **argv) {
 	char *dpyName = NULL;
 
 	//Do some init stuff
-	make_window(dpyName, "4D sudoku", 0, 0, 300, 300, &dpy, &win, &ctx);
+	make_window(dpyName, "4D sudoku", 0, 0, 1920, 1080, &dpy, &win, &ctx);
 	XMapWindow(dpy, win);
 	glXMakeCurrent(dpy, win, ctx);
 	//TODO: load shaders

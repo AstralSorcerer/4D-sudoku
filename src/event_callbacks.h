@@ -14,24 +14,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef XUTIL_H_
-#define XUTIL_H_
+#ifndef EVENT_CALLBACKS_H_
+#define EVENT_CALLBACKS_H_
 
-#include <GL/glx.h>
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
+typedef void (*mouseCallback)();
+typedef void (*keyCallback)(int key_sym);
+typedef void (*resizeCallback)();
 
-#include "event_callbacks.h"
+extern void mouse_callback ();
 
-/*
- * Create an RGB, double-buffered window.
- * Return the window and context handles.
- */
-extern void make_window (char *dpyName, const char *name, int x, int y, int width, int height, Display **dpyRet, Window *winRet, GLXContext *ctxRet);
+extern void key_callback (int key_sym);
 
-/*
- * Process events.
- * Return 0 when the user indicates that the program should close.
- */
-extern int process_events(Display *dpy, resizeCallback resizeCB, keyCallback keyCB, mouseCallback mouseCB);
-#endif /* XUTIL_H_ */
+extern void resize_callback ();
+
+#endif /* EVENT_CALLBACKS_H_ */

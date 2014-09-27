@@ -19,12 +19,13 @@
 #include <GL/glx.h>
 
 #include "xutil.h"
+#include "event_callbacks.h"
 
 /*
  * Create an RGB, double-buffered window.
  * Return the window and context handles.
  */
-void make_window (Display *dpy, const char *name, int x, int y, int width, int height, Window *winRet, GLXContext *ctxRet) {
+void make_window (char *dpyName, const char *name, int x, int y, int width, int height, Display **dpyRet, Window *winRet, GLXContext *ctxRet) {
 	int attrib[] = { GLX_RGBA, GLX_RED_SIZE, 1, GLX_GREEN_SIZE, 1, GLX_BLUE_SIZE, 1, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 1, None };
 	int scrnum;
 	XSetWindowAttributes attr;
@@ -34,10 +35,16 @@ void make_window (Display *dpy, const char *name, int x, int y, int width, int h
 	GLXContext ctx;
 	XVisualInfo *visinfo;
 
-	scrnum = DefaultScreen(dpy);
-	root = RootWindow(dpy, scrnum);
+	*dpyRet = XOpenDisplay(dpyName);
+	if (!(*dpyRet)) {
+		printf("Error: couldn't open display %s\n", dpyName);
+		exit(1);
+	}
 
-	visinfo = glXChooseVisual(dpy, scrnum, attrib);
+	scrnum = DefaultScreen(*dpyRet);
+	root = RootWindow(*dpyRet, scrnum);
+
+	visinfo = glXChooseVisual(*dpyRet, scrnum, attrib);
 	if (!visinfo) {
 		printf("Error: couldn't get an RGB, double-buffered visual\n");
 		exit(1);
@@ -46,25 +53,23 @@ void make_window (Display *dpy, const char *name, int x, int y, int width, int h
 	/* window attributes */
 	attr.background_pixel = 0;
 	attr.border_pixel = 0;
-	attr.colormap = XCreateColormap(dpy, root, visinfo->visual, AllocNone);
-	attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+	attr.colormap = XCreateColormap(*dpyRet, root, visinfo->visual, AllocNone);
+	attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 	mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
-	win = XCreateWindow(dpy, root, 0, 0, width, height, 0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr);
+	win = XCreateWindow(*dpyRet, root, 0, 0, width, height, 0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr);
 
 	/* set hints and properties */
-	{
-		XSizeHints sizehints;
-		sizehints.x = x;
-		sizehints.y = y;
-		sizehints.width = width;
-		sizehints.height = height;
-		sizehints.flags = USSize | USPosition;
-		XSetNormalHints(dpy, win, &sizehints);
-		XSetStandardProperties(dpy, win, name, name, None, (char **) NULL, 0, &sizehints);
-	}
+	XSizeHints sizehints;
+	sizehints.x = x;
+	sizehints.y = y;
+	sizehints.width = width;
+	sizehints.height = height;
+	sizehints.flags = USSize | USPosition;
+	XSetNormalHints(*dpyRet, win, &sizehints);
+	XSetStandardProperties(*dpyRet, win, name, name, None, (char **) NULL, 0, &sizehints);
 
-	ctx = glXCreateContext(dpy, visinfo, NULL, True);
+	ctx = glXCreateContext(*dpyRet, visinfo, NULL, True);
 	if (!ctx) {
 		printf("Error: glXCreateContext failed\n");
 		exit(1);
@@ -74,4 +79,32 @@ void make_window (Display *dpy, const char *name, int x, int y, int width, int h
 
 	*winRet = win;
 	*ctxRet = ctx;
+}
+
+/*
+ * Process events.
+ * Return 0 when the user indicates that the program should close.
+ */
+int process_events(Display *dpy, resizeCallback resizeCB, keyCallback keyCB, mouseCallback mouseCB) {
+	XEvent event;
+
+	if (XPending(dpy) > 0) {
+		XNextEvent(dpy, &event);
+		switch (event.type) {
+		case KeyPress:
+			keyCB(XLookupKeysym(&event.xkey, 0));
+			if (XLookupKeysym(&event.xkey, 0) == XK_Escape) return 0;
+			break;
+		case ConfigureNotify:
+			resizeCB();
+			break;
+		case ButtonPress:
+			mouseCB();
+			break;
+		default:
+			break;
+		}
+	}
+
+	return 1;
 }

@@ -6,7 +6,7 @@ LFLAGS=-lGL -lX11
 
 all : sudoku
 
-sudoku : $(SRCDIR)/main.o $(SRCDIR)/xutil.o
+sudoku : $(SRCDIR)/main.o $(SRCDIR)/xutil.o $(SRCDIR)/event_callbacks.o
 	test -d $(BUILDDIR) || mkdir $(BUILDDIR)
 	$(CC) -o $(BUILDDIR)/$@ $^ $(LFLAGS)
 clean :

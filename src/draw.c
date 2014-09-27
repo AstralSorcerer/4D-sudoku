@@ -15,21 +15,33 @@
  */
 
 
-#include <stdio.h>
 #include <GL/gl.h>
+#include <GL/glx.h>
 
-#include "event_callbacks.h"
+#include "draw.h"
 
-void mouse_callback () {
-	printf("Mouse event\n");
+static GLuint vertexbuffer;
+static GLfloat vertex_data[] = {
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f
+};
+
+void draw_init () {
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-void key_callback (int key_sym) {
-	printf("Key event\n");
-}
+void draw (Display *dpy, GLXDrawable drawable) {
+	glClear(GL_COLOR_BUFFER_BIT);
 
-void resize_callback (int width, int height) {
-	printf("Configure Notify\n");
-
-	glViewport(0, 0, width, height);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDisableVertexAttribArray(0);
+	glXSwapBuffers(dpy, drawable);
 }

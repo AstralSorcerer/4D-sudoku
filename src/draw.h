@@ -14,17 +14,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EVENT_CALLBACKS_H_
-#define EVENT_CALLBACKS_H_
+#ifndef DRAW_H_
+#define DRAW_H_
 
-typedef void (*mouseCallback)();
-typedef void (*keyCallback)(int key_sym);
-typedef void (*resizeCallback)(int width, int height);
+extern void draw ();
 
-extern void mouse_callback ();
+extern void draw_init();
 
-extern void key_callback (int key_sym);
-
-extern void resize_callback (int width, int height);
-
-#endif /* EVENT_CALLBACKS_H_ */
+#endif /* DRAW_H_ */

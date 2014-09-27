@@ -105,7 +105,7 @@ int process_events(Display *dpy, resizeCallback resizeCB, keyCallback keyCB, mou
 			if (XLookupKeysym(&event.xkey, 0) == XK_Escape) return 0;
 			break;
 		case ConfigureNotify:
-			resizeCB();
+			resizeCB(event.xconfigure.width, event.xconfigure.height);
 			break;
 		case ButtonPress:
 		case ButtonRelease:

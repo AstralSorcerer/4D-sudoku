@@ -20,6 +20,7 @@
 
 #include "xutil.h"
 #include "event_callbacks.h"
+#include "draw.h"
 
 int main (int argn, char **argv) {
 	Display *dpy;
@@ -31,15 +32,16 @@ int main (int argn, char **argv) {
 	make_window(dpyName, "4D sudoku", 0, 0, 1920, 1080, &dpy, &win, &ctx);
 	XMapWindow(dpy, win);
 	glXMakeCurrent(dpy, win, ctx);
+	draw_init();
 	//TODO: load shaders
 
 	//Run main OpenGL loop, includes user input
 	do {
-		//draw();
+		draw(dpy, win);
 	} while (process_events(dpy, resize_callback, key_callback, mouse_callback));
 
 	//Exit
-	//glXDestroyContext(dpy, ctx);
-	//XDestroyWindow(dpy, win);
-	//XCloseDisplay(dpy);
+	glXDestroyContext(dpy, ctx);
+	XDestroyWindow(dpy, win);
+	XCloseDisplay(dpy);
 }

@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glx.h>
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 #include "xutil.h"
 #include "event_callbacks.h"
@@ -50,7 +53,7 @@ void make_window (char *dpyName, const char *name, int x, int y, int width, int 
 		exit(1);
 	}
 
-	/* window attributes */
+	// window attributes
 	attr.background_pixel = 0;
 	attr.border_pixel = 0;
 	attr.colormap = XCreateColormap(*dpyRet, root, visinfo->visual, AllocNone);
@@ -59,7 +62,7 @@ void make_window (char *dpyName, const char *name, int x, int y, int width, int 
 
 	win = XCreateWindow(*dpyRet, root, 0, 0, width, height, 0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr);
 
-	/* set hints and properties */
+	// set hints and properties
 	XSizeHints sizehints;
 	sizehints.x = x;
 	sizehints.y = y;
@@ -68,6 +71,10 @@ void make_window (char *dpyName, const char *name, int x, int y, int width, int 
 	sizehints.flags = USSize | USPosition;
 	XSetNormalHints(*dpyRet, win, &sizehints);
 	XSetStandardProperties(*dpyRet, win, name, name, None, (char **) NULL, 0, &sizehints);
+
+	// set WM_PROTOCOLS
+	Atom wmDeleteMessage = XInternAtom(*dpyRet, "WM_DELETE_WINDOW", False);
+	XSetWMProtocols(*dpyRet, win, &wmDeleteMessage, 1);
 
 	ctx = glXCreateContext(*dpyRet, visinfo, NULL, True);
 	if (!ctx) {
@@ -86,12 +93,14 @@ void make_window (char *dpyName, const char *name, int x, int y, int width, int 
  * Return 0 when the user indicates that the program should close.
  */
 int process_events(Display *dpy, resizeCallback resizeCB, keyCallback keyCB, mouseCallback mouseCB) {
+	Atom wmDeleteMessage = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XEvent event;
 
 	if (XPending(dpy) > 0) {
 		XNextEvent(dpy, &event);
 		switch (event.type) {
 		case KeyPress:
+		case KeyRelease:
 			keyCB(XLookupKeysym(&event.xkey, 0));
 			if (XLookupKeysym(&event.xkey, 0) == XK_Escape) return 0;
 			break;
@@ -99,7 +108,12 @@ int process_events(Display *dpy, resizeCallback resizeCB, keyCallback keyCB, mou
 			resizeCB();
 			break;
 		case ButtonPress:
+		case ButtonRelease:
+		case MotionNotify:
 			mouseCB();
+			break;
+		case ClientMessage:
+			if (event.xclient.data.l[0] == wmDeleteMessage) return 0;
 			break;
 		default:
 			break;

@@ -39,7 +39,7 @@ int main (int argn, char **argv) {
 	} while (process_events(dpy, resize_callback, key_callback, mouse_callback));
 
 	//Exit
-	glXDestroyContext(dpy, ctx);
-	XDestroyWindow(dpy, win);
-	XCloseDisplay(dpy);
+	//glXDestroyContext(dpy, ctx);
+	//XDestroyWindow(dpy, win);
+	//XCloseDisplay(dpy);
 }
